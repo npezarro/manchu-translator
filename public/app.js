@@ -119,13 +119,14 @@
     resultImg.src = imageUrl;
 
     // Populate panels
-    document.getElementById('panel-translation').textContent = data.translation || 'No translation available.';
+    document.getElementById('panel-translation').innerHTML = formatSection(data.translation) || 'No translation available.';
+    document.getElementById('panel-charmap').innerHTML = formatCharMap(data.charactermap) || 'No character map available.';
     document.getElementById('panel-romanization').textContent = data.romanization || 'No romanization available.';
     document.getElementById('panel-wordbyword').textContent = data.wordbyword || 'No word-by-word analysis available.';
     document.getElementById('panel-ocr').innerHTML = data.ocr
       ? '<span class="manchu-text">' + escapeHtml(data.ocr) + '</span>'
       : 'No OCR text extracted.';
-    document.getElementById('panel-chinese').textContent = data.chinesetext || 'No Chinese text detected.';
+    document.getElementById('panel-chinese').innerHTML = formatSection(data.chinesetext) || 'No Chinese text detected.';
     document.getElementById('panel-notes').textContent = data.notes || 'No notes.';
 
     // Meta
@@ -145,5 +146,44 @@
     const div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
+  }
+
+  function formatSection(text) {
+    if (!text) return '';
+    // Convert **bold** to <strong>, preserve newlines
+    return escapeHtml(text)
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\n/g, '<br>');
+  }
+
+  function formatCharMap(text) {
+    if (!text) return '';
+    // Parse character map lines into a table
+    const lines = text.trim().split('\n').filter(l => l.trim());
+    const arrowLines = lines.filter(l => l.includes('→'));
+
+    if (arrowLines.length === 0) return '<pre>' + escapeHtml(text) + '</pre>';
+
+    let html = '<table class="charmap-table"><thead><tr><th>Manchu</th><th>Romanization</th><th>Chinese</th><th>English</th></tr></thead><tbody>';
+    for (const line of lines) {
+      const parts = line.split('→').map(s => s.trim());
+      if (parts.length >= 2) {
+        const manchu = parts[0] || '';
+        const roman = parts[1] || '';
+        const chinese = parts[2] || '';
+        const english = parts.slice(3).join(' → ') || '';
+        html += '<tr>'
+          + '<td class="manchu-text">' + escapeHtml(manchu) + '</td>'
+          + '<td>' + escapeHtml(roman) + '</td>'
+          + '<td>' + escapeHtml(chinese) + '</td>'
+          + '<td>' + escapeHtml(english) + '</td>'
+          + '</tr>';
+      } else {
+        // Non-arrow line (header, separator, etc.)
+        html += '<tr><td colspan="4" class="charmap-header">' + escapeHtml(line) + '</td></tr>';
+      }
+    }
+    html += '</tbody></table>';
+    return html;
   }
 })();

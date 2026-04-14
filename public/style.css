@@ -143,6 +143,37 @@ h1 { font-size: 1.8rem; font-weight: 600; margin-bottom: 0.5rem; }
   font-family: 'Noto Sans Mongolian', serif;
   font-size: 1.1rem;
 }
+/* Character Map Table */
+.charmap-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.charmap-table th {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 2px solid var(--border);
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.charmap-table td {
+  padding: 0.4rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.charmap-table tr:hover td { background: rgba(124, 138, 255, 0.04); }
+.charmap-table .manchu-text { font-size: 1.05rem; }
+.charmap-header {
+  font-weight: 600;
+  color: var(--text-muted);
+  padding-top: 0.75rem !important;
+  border-bottom: none !important;
+}
+.tab-panel strong { color: var(--accent); }
+
 .result-meta {
   margin-top: 0.75rem;
   font-size: 0.8rem;
