@@ -1,0 +1,17 @@
+{
+  "name": "manchu-translator",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Manchu document OCR and translation tool powered by Claude AI",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "multer": "^1.4.5-lts.1",
+    "sharp": "^0.33.5"
+  }
+}

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manchu Document Translator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Mongolian&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Manchu Document Translator</h1>
+      <p class="subtitle">Upload a Manchu manuscript image for AI-powered OCR, transliteration, and English translation.<br>
+        Powered by Claude AI with the <a href="https://github.com/purobaburi/manchu-resources" target="_blank">Norman Manchu-English Dictionary</a>.</p>
+    </header>
+
+    <main>
+      <!-- Upload Zone -->
+      <div id="upload-zone" class="upload-zone">
+        <div class="upload-icon">&#x1F4DC;</div>
+        <p class="upload-text">Drag & drop a Manchu document image here</p>
+        <p class="upload-hint">or click to browse (JPEG, PNG, WebP — max 10MB)</p>
+        <input type="file" id="file-input" accept="image/jpeg,image/png,image/webp" hidden>
+      </div>
+
+      <!-- Examples -->
+      <div class="examples">
+        <p class="examples-label">Or try an example:</p>
+        <div class="example-thumbnails">
+          <button class="example-btn" data-src="examples/example1.png">
+            <img src="examples/example1.png" alt="Manchu-Chinese bilingual text, page 1" loading="lazy">
+            <span>Bilingual text (p. 13)</span>
+          </button>
+          <button class="example-btn" data-src="examples/example2.png">
+            <img src="examples/example2.png" alt="Manchu-Chinese bilingual text, page 2" loading="lazy">
+            <span>Bilingual text (p. 8)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div id="loading" class="loading hidden">
+        <div class="loading-content">
+          <div class="spinner"></div>
+          <p id="loading-step" class="loading-step">Analyzing document...</p>
+        </div>
+        <div class="loading-preview">
+          <img id="loading-image" alt="Uploaded document">
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div id="results" class="results hidden">
+        <div class="results-grid">
+          <div class="result-image">
+            <img id="result-img" alt="Analyzed document">
+          </div>
+          <div class="result-content">
+            <div class="tabs">
+              <button class="tab active" data-tab="translation">Translation</button>
+              <button class="tab" data-tab="romanization">Romanization</button>
+              <button class="tab" data-tab="wordbyword">Word-by-Word</button>
+              <button class="tab" data-tab="ocr">OCR Text</button>
+              <button class="tab" data-tab="chinese">Chinese</button>
+              <button class="tab" data-tab="notes">Notes</button>
+            </div>
+            <div class="tab-panels">
+              <div class="tab-panel active" id="panel-translation"></div>
+              <div class="tab-panel" id="panel-romanization"></div>
+              <div class="tab-panel" id="panel-wordbyword"></div>
+              <div class="tab-panel" id="panel-ocr"></div>
+              <div class="tab-panel" id="panel-chinese"></div>
+              <div class="tab-panel" id="panel-notes"></div>
+            </div>
+            <div class="result-meta" id="result-meta"></div>
+          </div>
+        </div>
+        <button id="reset-btn" class="reset-btn">Translate another document</button>
+      </div>
+
+      <!-- Error -->
+      <div id="error" class="error hidden">
+        <p id="error-msg"></p>
+        <button id="retry-btn" class="reset-btn">Try again</button>
+      </div>
+    </main>
+
+    <footer>
+      <p>Built on research from the <a href="https://github.com/cisnlp/manchu-in-context-mt" target="_blank">ACL 2025 Manchu MT paper</a>
+        and <a href="https://github.com/mic7ch1/ManchuAI-OCR" target="_blank">ManchuAI-OCR</a>.
+        Dictionary: Jerry Norman's <em>A Comprehensive Manchu-English Dictionary</em>.</p>
+    </footer>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
