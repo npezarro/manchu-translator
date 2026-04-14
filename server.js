@@ -41,6 +41,9 @@ app.get(`${BASE}/api/health`, (req, res) => {
 
 // Translation endpoint
 app.post(`${BASE}/api/translate`, upload.single('image'), async (req, res) => {
+  // Long timeout for Claude CLI calls
+  req.setTimeout(300_000);
+  res.setTimeout(300_000);
   const ip = req.ip;
   const limit = rateLimiter.check(ip);
   if (!limit.allowed) {
