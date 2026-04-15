@@ -11,24 +11,31 @@ describe('prompt-builder', () => {
     });
 
     it('mentions Manchu script', () => {
-      const prompt = buildOcrPrompt();
-      assert.ok(prompt.includes('Manchu'));
+      assert.ok(buildOcrPrompt().includes('Manchu'));
     });
 
     it('mentions Möllendorf romanization', () => {
-      const prompt = buildOcrPrompt();
-      assert.ok(prompt.includes('Möllendorf'));
+      assert.ok(buildOcrPrompt().includes('Möllendorf'));
     });
 
     it('asks for Chinese text identification', () => {
+      assert.ok(buildOcrPrompt().includes('Chinese'));
+    });
+
+    it('requests JSON output format', () => {
       const prompt = buildOcrPrompt();
-      assert.ok(prompt.includes('Chinese'));
+      assert.ok(prompt.includes('JSON'));
+      assert.ok(prompt.includes('columns'));
+      assert.ok(prompt.includes('readingOrder'));
+      assert.ok(prompt.includes('bbox'));
     });
   });
 
   describe('buildTranslationPrompt', () => {
+    const emptyOcr = { columns: [], readingOrder: [], chineseText: '' };
+
     it('includes grammar context', () => {
-      const prompt = buildTranslationPrompt('', {});
+      const prompt = buildTranslationPrompt(emptyOcr, {});
       assert.ok(prompt.includes('SOV word order'));
       assert.ok(prompt.includes('agglutinative'));
     });
@@ -38,41 +45,45 @@ describe('prompt-builder', () => {
         'amba': 'AMBA big, great, important',
         'dorgi': 'DORGI inner, within',
       };
-      const prompt = buildTranslationPrompt('', entries);
+      const prompt = buildTranslationPrompt(emptyOcr, entries);
       assert.ok(prompt.includes('AMBA big, great'));
       assert.ok(prompt.includes('DORGI inner'));
     });
 
-    it('includes XML section tags', () => {
-      const prompt = buildTranslationPrompt('', {});
-      assert.ok(prompt.includes('<OCR>'));
+    it('includes required XML section tags', () => {
+      const prompt = buildTranslationPrompt(emptyOcr, {});
       assert.ok(prompt.includes('<Translation>'));
-      assert.ok(prompt.includes('<CharacterMap>'));
       assert.ok(prompt.includes('<WordByWord>'));
       assert.ok(prompt.includes('<Notes>'));
       assert.ok(prompt.includes('<ChineseText>'));
+      assert.ok(prompt.includes('<CharacterDetail>'));
     });
 
-    it('includes prior OCR text when provided', () => {
-      const prompt = buildTranslationPrompt('amba gurun', {});
-      assert.ok(prompt.includes('Prior OCR Pass'));
-      assert.ok(prompt.includes('amba gurun'));
+    it('includes OCR data in prompt when provided', () => {
+      const ocrData = {
+        columns: [{ index: 0, side: 'left', words: [{ manchu: 'ᡥᠠᡶᠠᠨ', romanization: 'hafan', confidence: 'high' }] }],
+        readingOrder: ['hafan'],
+        chineseText: '官'
+      };
+      const prompt = buildTranslationPrompt(ocrData, {});
+      assert.ok(prompt.includes('hafan'));
+      assert.ok(prompt.includes('Column 0'));
     });
 
-    it('omits prior OCR section when romanizedText is empty', () => {
-      const prompt = buildTranslationPrompt('', {});
-      assert.ok(!prompt.includes('Prior OCR Pass'));
+    it('shows no matches message when dictionary is empty', () => {
+      const prompt = buildTranslationPrompt(emptyOcr, {});
+      assert.ok(prompt.includes('no matches found'));
     });
 
     it('includes case suffix reference', () => {
-      const prompt = buildTranslationPrompt('', {});
+      const prompt = buildTranslationPrompt(emptyOcr, {});
       assert.ok(prompt.includes('accusative -be'));
       assert.ok(prompt.includes('genitive -i/-ni'));
       assert.ok(prompt.includes('dative -de'));
     });
 
     it('includes verb ending reference', () => {
-      const prompt = buildTranslationPrompt('', {});
+      const prompt = buildTranslationPrompt(emptyOcr, {});
       assert.ok(prompt.includes('aorist -mbi'));
       assert.ok(prompt.includes('past -ha/-he/-ho'));
     });

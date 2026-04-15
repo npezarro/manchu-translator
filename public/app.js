@@ -1,4 +1,16 @@
 (function () {
+  // Lightbox
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImg = document.getElementById('lightbox-img');
+  document.getElementById('lightbox-close').addEventListener('click', () => lightbox.classList.add('hidden'));
+  document.querySelector('.lightbox-backdrop').addEventListener('click', () => lightbox.classList.add('hidden'));
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') lightbox.classList.add('hidden'); });
+
+  function openLightbox(src) {
+    lightboxImg.src = src;
+    lightbox.classList.remove('hidden');
+  }
+
   const uploadZone = document.getElementById('upload-zone');
   const fileInput = document.getElementById('file-input');
   const loading = document.getElementById('loading');
@@ -182,7 +194,9 @@
   function formatCharMapCards(entries) {
     if (!entries.length) return '<p>No character map available.</p>';
 
-    let html = '<div class="charmap-grid">';
+    // "View full image" button at top
+    let html = '<div class="charmap-actions"><button class="charmap-fullimg-btn" onclick="document.querySelector(\'.lightbox\').classList.remove(\'hidden\'); document.getElementById(\'lightbox-img\').src = document.getElementById(\'result-img\').src;">View full source image</button></div>';
+    html += '<div class="charmap-grid">';
     for (const entry of entries) {
       const confClass = 'confidence-' + (entry.confidence || 'medium');
       const confLabel = (entry.confidence || 'medium');
