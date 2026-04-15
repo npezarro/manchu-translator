@@ -121,6 +121,10 @@ app.use((err, req, res, next) => {
   next(err);
 });
 
-app.listen(PORT, '127.0.0.1', () => {
-  console.log(`Manchu Translator running on http://127.0.0.1:${PORT}${BASE}`);
-});
+if (require.main === module) {
+  app.listen(PORT, '127.0.0.1', () => {
+    console.log(`Manchu Translator running on http://127.0.0.1:${PORT}${BASE}`);
+  });
+}
+
+module.exports = app;
