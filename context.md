@@ -1,12 +1,16 @@
 # context.md — manchu-translator
 
-Last Updated: 2026-04-15 — Major pipeline restructure: VM offload, structured OCR, character image crops
+Last Updated: 2026-04-15 — Translation breakout, OCR reliability, image enhancement
 
 ## Current State
 - Translator is **online** via PM2 on VM ([VM_HOST]:3110)
 - Claude CLI processing runs on **local WSL machine** (not the VM) via reverse SSH tunnel on port 3111
 - If local machine is offline, returns 503 "temporarily unavailable"
 - Two-pass pipeline: Structured OCR (Sonnet, JSON with bboxes) → Translation (Sonnet, XML tags)
+- Translation tab now shows **separate Manchu and Chinese translations** with viability badge (HIGH/MEDIUM/LOW)
+- Image enhancement pipeline (normalize + sharpen) applied before OCR, toggle in UI
+- OCR prompt includes valid Mollendorf character reference, concrete examples, auto-retry on parse failure
+- Post-parse romanization validation: lowercase enforcement, invalid char stripping, confidence downgrade
 - Server-side image cropping via sharp using OCR bounding boxes
 - Character Map returns structured array with base64 crop images per word
 - Dictionary: Norman's Comprehensive Manchu-English Dictionary (20,599 entries)
@@ -38,4 +42,6 @@ VM (server.js:3110) → reverse tunnel → WSL (local-worker.js:3111) → Claude
 ## Active Branch
 `main`
 
-Full session closeout: privateContext/deliverables/closeouts/2026-04-15-manchu-pipeline-restructure.md
+Full session closeouts:
+- privateContext/deliverables/closeouts/2026-04-15-manchu-pipeline-restructure.md
+- privateContext/deliverables/closeouts/2026-04-15-manchu-translation-breakout.md
