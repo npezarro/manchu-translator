@@ -23,10 +23,8 @@ VM (server.js:3110) → reverse tunnel → WSL (local-worker.js:3111) → Claude
 - Tunnel: `~/bin/start-tunnel.sh` with `-R 3111:127.0.0.1:3111`
 
 ## Open Work
-- Tests in `test/` are outdated — need updating for new parseOcrResponse/parseTranslationResponse APIs
-- `gcloud compute` CLI has billing API issue on project [GCP_PROJECT]
-- Could add "full image" modal to character map cards
-- Bounding box accuracy varies — padding helps but some crops may include neighbors
+- Bounding box accuracy varies — padding (18px) helps but some crops may include neighbors
+- 75 tests passing (claude-cli, dictionary, image-cropper, prompt-builder, rate-limiter, server)
 
 ## Environment Notes
 - **Deploy target:** GCP VM ([VM_HOST])
