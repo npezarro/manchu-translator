@@ -81,7 +81,7 @@
     results.classList.add('hidden');
     error.classList.add('hidden');
     loading.classList.remove('hidden');
-    loadingStep.textContent = 'Step 1: Reading Manchu text (OCR)...';
+    loadingStep.textContent = 'Step 1: Recognizing Manchu characters...';
 
     // Preview image
     const previewUrl = URL.createObjectURL(file);
@@ -91,14 +91,18 @@
     const formData = new FormData();
     formData.append('image', file);
 
-    // Simulate step update
-    const stepTimer = setTimeout(() => {
-      loadingStep.textContent = 'Step 2: Translating with dictionary context...';
-    }, 15000);
+    // Step updates (timed since we don't get real-time progress)
+    const stepTimer1 = setTimeout(() => {
+      loadingStep.textContent = 'Step 2: Cropping character images...';
+    }, 60000);
+    const stepTimer2 = setTimeout(() => {
+      loadingStep.textContent = 'Step 3: Translating with dictionary context...';
+    }, 75000);
 
     try {
       const resp = await fetch('api/translate', { method: 'POST', body: formData });
-      clearTimeout(stepTimer);
+      clearTimeout(stepTimer1);
+      clearTimeout(stepTimer2);
 
       if (!resp.ok) {
         const data = await resp.json().catch(() => ({}));
@@ -108,7 +112,8 @@
       const data = await resp.json();
       showResults(data, previewUrl);
     } catch (err) {
-      clearTimeout(stepTimer);
+      clearTimeout(stepTimer1);
+      clearTimeout(stepTimer2);
       showError(err.message || 'Translation failed. Please try again.');
     }
   }
@@ -133,6 +138,10 @@
     const parts = [];
     if (data.wordsFound) parts.push(`${data.wordsFound} words extracted`);
     if (data.dictionaryMatches) parts.push(`${data.dictionaryMatches} dictionary matches`);
+    if (Array.isArray(data.charactermap)) {
+      const crops = data.charactermap.filter(e => e.cropBase64).length;
+      if (crops) parts.push(`${crops} character crops`);
+    }
     resultMeta.textContent = parts.length ? parts.join(' · ') : '';
 
     // Reset to translation tab
@@ -150,15 +159,70 @@
 
   function formatSection(text) {
     if (!text) return '';
-    // Convert **bold** to <strong>, preserve newlines
     return escapeHtml(text)
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
       .replace(/\n/g, '<br>');
   }
 
-  function formatCharMap(text) {
+  /**
+   * Character Map — handles both new structured array and legacy string format.
+   */
+  function formatCharMap(data) {
+    // New structured format: array of objects with cropBase64
+    if (Array.isArray(data)) {
+      return formatCharMapCards(data);
+    }
+    // Legacy string format (arrow notation)
+    if (typeof data === 'string') {
+      return formatCharMapLegacy(data);
+    }
+    return '';
+  }
+
+  function formatCharMapCards(entries) {
+    if (!entries.length) return '<p>No character map available.</p>';
+
+    let html = '<div class="charmap-grid">';
+    for (const entry of entries) {
+      const confClass = 'confidence-' + (entry.confidence || 'medium');
+      const confLabel = (entry.confidence || 'medium');
+
+      html += '<div class="charmap-card">';
+
+      // Crop image
+      if (entry.cropBase64) {
+        html += '<img src="' + entry.cropBase64 + '" alt="' + escapeHtml(entry.romanization) + '" loading="lazy">';
+      }
+
+      // Manchu Unicode
+      if (entry.manchu) {
+        html += '<div class="charmap-manchu manchu-text">' + escapeHtml(entry.manchu) + '</div>';
+      }
+
+      // Romanization
+      html += '<div class="charmap-roman">' + escapeHtml(entry.romanization || '') + '</div>';
+
+      // Chinese
+      if (entry.chinese) {
+        html += '<div class="charmap-chinese">' + escapeHtml(entry.chinese) + '</div>';
+      }
+
+      // English meaning
+      if (entry.english) {
+        html += '<div class="charmap-english">' + escapeHtml(entry.english) + '</div>';
+      }
+
+      // Confidence
+      html += '<div class="charmap-conf"><span class="' + confClass + '">' + confLabel + '</span></div>';
+
+      html += '</div>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function formatCharMapLegacy(text) {
     if (!text) return '';
-    // Parse character map lines into a table
     const lines = text.trim().split('\n').filter(l => l.trim());
     const arrowLines = lines.filter(l => l.includes('→'));
 
@@ -179,7 +243,6 @@
           + '<td>' + escapeHtml(english) + '</td>'
           + '</tr>';
       } else {
-        // Non-arrow line (header, separator, etc.)
         html += '<tr><td colspan="4" class="charmap-header">' + escapeHtml(line) + '</td></tr>';
       }
     }

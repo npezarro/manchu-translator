@@ -174,6 +174,67 @@ h1 { font-size: 1.8rem; font-weight: 600; margin-bottom: 0.5rem; }
 }
 .tab-panel strong { color: var(--accent); }
 
+/* Character Map Card Grid */
+.charmap-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.75rem;
+}
+.charmap-card {
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.65rem;
+  transition: border-color 0.2s;
+}
+.charmap-card:hover {
+  border-color: var(--accent);
+}
+.charmap-card img {
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+  background: #f5f0e8;
+  display: block;
+}
+.charmap-manchu {
+  font-family: 'Noto Sans Mongolian', serif;
+  font-size: 1.15rem;
+  margin-bottom: 0.2rem;
+  line-height: 1.3;
+}
+.charmap-roman {
+  font-weight: 600;
+  color: var(--accent);
+  font-size: 0.9rem;
+  margin-bottom: 0.2rem;
+}
+.charmap-chinese {
+  font-size: 0.95rem;
+  margin-bottom: 0.15rem;
+}
+.charmap-english {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+.charmap-conf {
+  margin-top: 0.3rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.confidence-high { color: #4caf50; }
+.confidence-medium { color: #ff9800; }
+.confidence-low { color: var(--error); }
+
+/* Override pre-wrap for charmap panel since it uses card grid */
+#panel-charmap {
+  white-space: normal;
+  max-height: 600px;
+}
+
 .result-meta {
   margin-top: 0.75rem;
   font-size: 0.8rem;

@@ -5,7 +5,8 @@ const sharp = require('sharp');
 const path = require('path');
 const dictionary = require('./lib/dictionary');
 const { buildOcrPrompt, buildTranslationPrompt } = require('./lib/prompt-builder');
-const { callClaude, parseResponse, checkWorkerHealth } = require('./lib/claude-cli');
+const { callClaude, parseOcrResponse, parseTranslationResponse, parseCharacterDetail, checkWorkerHealth } = require('./lib/claude-cli');
+const { cropCharacters } = require('./lib/image-cropper');
 const rateLimiter = require('./lib/rate-limiter');
 
 const app = express();
@@ -42,9 +43,8 @@ app.get(`${BASE}/api/health`, async (req, res) => {
 
 // Translation endpoint
 app.post(`${BASE}/api/translate`, upload.single('image'), async (req, res) => {
-  // Long timeout for Claude CLI calls
-  req.setTimeout(300_000);
-  res.setTimeout(300_000);
+  req.setTimeout(600_000);
+  res.setTimeout(600_000);
   const ip = req.ip;
   const limit = rateLimiter.check(ip);
   if (!limit.allowed) {
@@ -71,36 +71,108 @@ app.post(`${BASE}/api/translate`, upload.single('image'), async (req, res) => {
       console.log(`  Resized from ${metadata.width}x${metadata.height}`);
     }
 
-    // Pass 1: Quick OCR with Haiku
-    console.log('  Pass 1: OCR with Haiku...');
+    // === PASS 1: Structured OCR with Sonnet ===
+    console.log('  Pass 1: Structured OCR with Sonnet...');
     const ocrPrompt = buildOcrPrompt();
-    let romanizedText = '';
+    let ocrData = null;
+    let ocrRaw = '';
     try {
-      romanizedText = await callClaude(imageBuffer, mimeType, ocrPrompt, 'claude-haiku-4-5-20251001');
-      console.log(`  OCR result: ${romanizedText.substring(0, 100)}...`);
+      ocrRaw = await callClaude(imageBuffer, mimeType, ocrPrompt, 'claude-sonnet-4-6');
+      ocrData = parseOcrResponse(ocrRaw);
+      if (ocrData) {
+        console.log(`  OCR: ${ocrData.readingOrder.length} words in ${ocrData.columns.length} columns`);
+      } else {
+        console.warn('  OCR JSON parse failed, will proceed without structured OCR');
+      }
     } catch (err) {
-      console.warn('  Pass 1 failed, continuing with pass 2 only:', err.message);
+      console.warn('  Pass 1 failed:', err.message);
     }
 
-    // Look up words in dictionary
-    const words = romanizedText
-      .replace(/CHINESE:.*$/s, '')
-      .split(/[\s,.\-;:]+/)
-      .filter(w => w.length > 1);
+    // === IMAGE CROPPING ===
+    let cropMap = new Map();
+    if (ocrData) {
+      try {
+        console.log('  Cropping character images...');
+        cropMap = await cropCharacters(imageBuffer, ocrData.columns);
+        console.log(`  Cropped ${cropMap.size} character images`);
+      } catch (err) {
+        console.warn('  Cropping failed:', err.message);
+      }
+    }
+
+    // === DICTIONARY LOOKUP on clean romanized words ===
+    const words = ocrData
+      ? ocrData.readingOrder.filter(w => w && w.length > 1 && !w.endsWith('?'))
+      : [];
     const dictEntries = dictionary.lookupWords(words);
     console.log(`  Dictionary matches: ${Object.keys(dictEntries).length} / ${words.length} words`);
 
-    // Pass 2: Full translation with Sonnet
+    // === PASS 2: Translation with Sonnet ===
     console.log('  Pass 2: Translation with Sonnet...');
-    const translationPrompt = buildTranslationPrompt(romanizedText, dictEntries);
-    const rawResponse = await callClaude(imageBuffer, mimeType, translationPrompt, 'claude-sonnet-4-6');
+    const translationPrompt = buildTranslationPrompt(
+      ocrData || { columns: [], readingOrder: [], chineseText: '' },
+      dictEntries
+    );
+    const rawTranslation = await callClaude(imageBuffer, mimeType, translationPrompt, 'claude-sonnet-4-6');
+    const translationResult = parseTranslationResponse(rawTranslation);
 
-    // Parse structured response
-    const result = parseResponse(rawResponse);
-    result.dictionaryMatches = Object.keys(dictEntries).length;
-    result.wordsFound = words.length;
+    // === ASSEMBLE RESPONSE ===
+    // Parse character details from Call 2 for Chinese/English meanings
+    const charDetail = parseCharacterDetail(translationResult.characterdetail || '');
 
-    console.log(`  Done. Translation length: ${(result.translation || '').length} chars`);
+    // Build structured character map from OCR data + crops + dictionary + Call 2 details
+    const charactermap = [];
+    if (ocrData) {
+      for (const col of ocrData.columns) {
+        for (let wi = 0; wi < (col.words || []).length; wi++) {
+          const word = col.words[wi];
+          const rom = (word.romanization || '').toLowerCase().replace(/\?$/, '');
+          const cropKey = `${col.index}-${wi}`;
+          const detail = charDetail[rom] || {};
+          const dictDef = dictEntries[rom];
+
+          charactermap.push({
+            manchu: word.manchu || '',
+            romanization: word.romanization || '',
+            cropBase64: cropMap.get(cropKey) || null,
+            chinese: detail.chinese || '',
+            english: detail.english || (dictDef ? dictDef.substring(dictDef.indexOf(' ') + 1).substring(0, 120) : ''),
+            confidence: word.confidence || 'medium'
+          });
+        }
+      }
+    }
+
+    // Build OCR text and romanization from structured data
+    const ocrText = ocrData
+      ? ocrData.columns.map(col => {
+          const side = col.side ? ` (${col.side})` : '';
+          const words2 = (col.words || []).map(w => w.manchu || w.romanization).join(' ');
+          return `Column ${col.index}${side}: ${words2}`;
+        }).join('\n')
+      : '';
+
+    const romanization = ocrData
+      ? ocrData.columns.map(col => {
+          const side = col.side ? ` (${col.side})` : '';
+          const roms = (col.words || []).map(w => w.romanization).join(' ');
+          return `Column ${col.index}${side}: ${roms}`;
+        }).join('\n')
+      : '';
+
+    const result = {
+      ocr: ocrText,
+      charactermap,
+      romanization,
+      wordbyword: translationResult.wordbyword || '',
+      translation: translationResult.translation || '',
+      chinesetext: translationResult.chinesetext || '',
+      notes: translationResult.notes || '',
+      dictionaryMatches: Object.keys(dictEntries).length,
+      wordsFound: words.length
+    };
+
+    console.log(`  Done. Translation: ${(result.translation || '').length} chars, CharMap: ${charactermap.length} entries, Crops: ${cropMap.size}`);
     res.json(result);
   } catch (err) {
     if (err.message === 'WORKER_UNAVAILABLE') {
