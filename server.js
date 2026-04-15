@@ -5,7 +5,7 @@ const sharp = require('sharp');
 const path = require('path');
 const dictionary = require('./lib/dictionary');
 const { buildOcrPrompt, buildTranslationPrompt } = require('./lib/prompt-builder');
-const { callClaude, parseResponse } = require('./lib/claude-cli');
+const { callClaude, parseResponse, checkWorkerHealth } = require('./lib/claude-cli');
 const rateLimiter = require('./lib/rate-limiter');
 
 const app = express();
@@ -35,8 +35,9 @@ const upload = multer({
 app.use(BASE, express.static(path.join(__dirname, 'public')));
 
 // Health check
-app.get(`${BASE}/api/health`, (req, res) => {
-  res.json({ status: 'ok', dictionary: Object.keys(dictionary.load()).length });
+app.get(`${BASE}/api/health`, async (req, res) => {
+  const workerUp = await checkWorkerHealth();
+  res.json({ status: 'ok', dictionary: Object.keys(dictionary.load()).length, workerAvailable: workerUp });
 });
 
 // Translation endpoint
@@ -102,6 +103,12 @@ app.post(`${BASE}/api/translate`, upload.single('image'), async (req, res) => {
     console.log(`  Done. Translation length: ${(result.translation || '').length} chars`);
     res.json(result);
   } catch (err) {
+    if (err.message === 'WORKER_UNAVAILABLE') {
+      console.warn('Translation worker unavailable — local machine is offline');
+      return res.status(503).json({
+        error: 'Translation processing is temporarily unavailable. The processing server is offline. Please try again later.'
+      });
+    }
     console.error('Translation error:', err);
     res.status(500).json({ error: 'Translation failed. Please try again.' });
   }
