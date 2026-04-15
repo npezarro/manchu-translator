@@ -91,7 +91,7 @@ dorgi | 内 (nèi) | inner
   it('treats unstructured response as raw translation', () => {
     const raw = 'This is a plain text response without any XML tags.';
     const result = parseTranslationResponse(raw);
-    assert.equal(result.translation, raw);
+    assert.equal(result.manchutranslation, raw);
     assert.ok(result.notes.includes('not in structured format'));
   });
 

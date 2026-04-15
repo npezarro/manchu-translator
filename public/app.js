@@ -70,6 +70,7 @@
   function resetUI() {
     uploadZone.classList.remove('hidden');
     uploadZone.closest('main').querySelector('.examples').classList.remove('hidden');
+    document.getElementById('enhance-option').classList.remove('hidden');
     loading.classList.add('hidden');
     results.classList.add('hidden');
     error.classList.add('hidden');
@@ -90,6 +91,7 @@
     // Show loading
     uploadZone.classList.add('hidden');
     uploadZone.closest('main').querySelector('.examples').classList.add('hidden');
+    document.getElementById('enhance-option').classList.add('hidden');
     results.classList.add('hidden');
     error.classList.add('hidden');
     loading.classList.remove('hidden');
@@ -102,6 +104,8 @@
     // Upload
     const formData = new FormData();
     formData.append('image', file);
+    const enhanceOn = document.getElementById('enhance-toggle')?.checked !== false;
+    formData.append('enhance', enhanceOn ? 'true' : 'false');
 
     // Step updates (timed since we don't get real-time progress)
     const stepTimer1 = setTimeout(() => {
@@ -135,8 +139,23 @@
     results.classList.remove('hidden');
     resultImg.src = imageUrl;
 
-    // Populate panels
-    document.getElementById('panel-translation').innerHTML = formatSection(data.translation) || 'No translation available.';
+    // Populate panels — split Manchu vs Chinese translation
+    const translationHtml = [];
+    if (data.viability) {
+      const level = (data.viability.match(/^(HIGH|MEDIUM|LOW)/i) || ['MEDIUM'])[0].toUpperCase();
+      const viabilityClass = 'viability-' + level.toLowerCase();
+      translationHtml.push('<div class="viability-badge ' + viabilityClass + '">Manchu-only viability: ' + level + '</div>');
+    }
+    translationHtml.push('<h3>From Manchu</h3>');
+    translationHtml.push(formatSection(data.manchuTranslation || data.translation) || 'No translation available.');
+    if (data.chineseTranslation && data.chineseTranslation !== 'No Chinese text detected.') {
+      translationHtml.push('<h3>From Chinese</h3>');
+      translationHtml.push(formatSection(data.chineseTranslation));
+    }
+    if (data.viability) {
+      translationHtml.push('<details class="viability-details"><summary>Viability Assessment</summary>' + formatSection(data.viability) + '</details>');
+    }
+    document.getElementById('panel-translation').innerHTML = translationHtml.join('');
     document.getElementById('panel-charmap').innerHTML = formatCharMap(data.charactermap) || 'No character map available.';
     document.getElementById('panel-romanization').textContent = data.romanization || 'No romanization available.';
     document.getElementById('panel-wordbyword').textContent = data.wordbyword || 'No word-by-word analysis available.';

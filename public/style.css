@@ -335,4 +335,61 @@ footer a:hover { text-decoration: underline; }
 }
 .lightbox-close:hover { background: var(--error); }
 
+/* Viability badge */
+.viability-badge {
+  display: inline-block;
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 1rem;
+}
+.viability-high { background: rgba(76, 175, 80, 0.15); color: #4caf50; border: 1px solid rgba(76, 175, 80, 0.3); }
+.viability-medium { background: rgba(255, 152, 0, 0.15); color: #ff9800; border: 1px solid rgba(255, 152, 0, 0.3); }
+.viability-low { background: rgba(255, 107, 107, 0.15); color: var(--error); border: 1px solid rgba(255, 107, 107, 0.3); }
+
+/* Translation section headers */
+#panel-translation h3 {
+  color: var(--accent);
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 1.25rem 0 0.5rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--border);
+}
+#panel-translation h3:first-of-type {
+  margin-top: 0;
+}
+
+/* Viability details */
+.viability-details {
+  margin-top: 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.viability-details summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text);
+}
+.viability-details summary:hover {
+  color: var(--accent);
+}
+
+/* Enhance toggle */
+.enhance-option {
+  text-align: center;
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.enhance-option input[type="checkbox"] {
+  accent-color: var(--accent);
+}
+
 .hidden { display: none !important; }

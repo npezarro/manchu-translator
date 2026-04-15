@@ -6,7 +6,7 @@ const path = require('path');
 const dictionary = require('./lib/dictionary');
 const { buildOcrPrompt, buildTranslationPrompt } = require('./lib/prompt-builder');
 const { callClaude, parseOcrResponse, parseTranslationResponse, parseCharacterDetail, checkWorkerHealth } = require('./lib/claude-cli');
-const { cropCharacters } = require('./lib/image-cropper');
+const { cropCharacters, enhanceImage } = require('./lib/image-cropper');
 const rateLimiter = require('./lib/rate-limiter');
 
 const app = express();
@@ -71,18 +71,37 @@ app.post(`${BASE}/api/translate`, upload.single('image'), async (req, res) => {
       console.log(`  Resized from ${metadata.width}x${metadata.height}`);
     }
 
+    // === IMAGE ENHANCEMENT ===
+    const enhance = req.body?.enhance !== 'false'; // default: on
+    let ocrImageBuffer = imageBuffer;
+    if (enhance) {
+      try {
+        ocrImageBuffer = await enhanceImage(imageBuffer);
+        console.log('  Image enhanced (normalize + sharpen)');
+      } catch (err) {
+        console.warn('  Enhancement failed, using original:', err.message);
+        ocrImageBuffer = imageBuffer;
+      }
+    }
+
     // === PASS 1: Structured OCR with Sonnet ===
     console.log('  Pass 1: Structured OCR with Sonnet...');
     const ocrPrompt = buildOcrPrompt();
     let ocrData = null;
     let ocrRaw = '';
     try {
-      ocrRaw = await callClaude(imageBuffer, mimeType, ocrPrompt, 'claude-sonnet-4-6');
+      ocrRaw = await callClaude(ocrImageBuffer, mimeType, ocrPrompt, 'claude-sonnet-4-6');
       ocrData = parseOcrResponse(ocrRaw);
+      if (!ocrData) {
+        console.log('  OCR parse failed, retrying with stricter prompt...');
+        const retryPrompt = 'Your previous response was not valid JSON. Return ONLY a raw JSON object — no markdown fences, no commentary, no text before or after.\n\n' + ocrPrompt;
+        ocrRaw = await callClaude(ocrImageBuffer, mimeType, retryPrompt, 'claude-sonnet-4-6');
+        ocrData = parseOcrResponse(ocrRaw);
+      }
       if (ocrData) {
         console.log(`  OCR: ${ocrData.readingOrder.length} words in ${ocrData.columns.length} columns`);
       } else {
-        console.warn('  OCR JSON parse failed, will proceed without structured OCR');
+        console.warn('  OCR JSON parse failed after retry, will proceed without structured OCR');
       }
     } catch (err) {
       console.warn('  Pass 1 failed:', err.message);
@@ -93,7 +112,7 @@ app.post(`${BASE}/api/translate`, upload.single('image'), async (req, res) => {
     if (ocrData) {
       try {
         console.log('  Cropping character images...');
-        cropMap = await cropCharacters(imageBuffer, ocrData.columns);
+        cropMap = await cropCharacters(ocrImageBuffer, ocrData.columns);
         console.log(`  Cropped ${cropMap.size} character images`);
       } catch (err) {
         console.warn('  Cropping failed:', err.message);
@@ -165,7 +184,10 @@ app.post(`${BASE}/api/translate`, upload.single('image'), async (req, res) => {
       charactermap,
       romanization,
       wordbyword: translationResult.wordbyword || '',
-      translation: translationResult.translation || '',
+      manchuTranslation: translationResult.manchutranslation || '',
+      chineseTranslation: translationResult.chinesetranslation || '',
+      viability: translationResult.viabilityassessment || '',
+      translation: translationResult.manchutranslation || translationResult.translation || '',
       chinesetext: translationResult.chinesetext || '',
       notes: translationResult.notes || '',
       dictionaryMatches: Object.keys(dictEntries).length,

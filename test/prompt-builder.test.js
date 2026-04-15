@@ -52,7 +52,9 @@ describe('prompt-builder', () => {
 
     it('includes required XML section tags', () => {
       const prompt = buildTranslationPrompt(emptyOcr, {});
-      assert.ok(prompt.includes('<Translation>'));
+      assert.ok(prompt.includes('<ManchuTranslation>'));
+      assert.ok(prompt.includes('<ChineseTranslation>'));
+      assert.ok(prompt.includes('<ViabilityAssessment>'));
       assert.ok(prompt.includes('<WordByWord>'));
       assert.ok(prompt.includes('<Notes>'));
       assert.ok(prompt.includes('<ChineseText>'));
