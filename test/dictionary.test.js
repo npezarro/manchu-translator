@@ -1,4 +1,4 @@
-const { describe, it, before } = require('node:test');
+const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 const { load, stripSuffix, lookupWords, getRandomSample } = require('../lib/dictionary');
 
