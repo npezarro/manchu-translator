@@ -1,15 +1,9 @@
 (function () {
   // Lightbox
   const lightbox = document.getElementById('lightbox');
-  const lightboxImg = document.getElementById('lightbox-img');
   document.getElementById('lightbox-close').addEventListener('click', () => lightbox.classList.add('hidden'));
   document.querySelector('.lightbox-backdrop').addEventListener('click', () => lightbox.classList.add('hidden'));
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') lightbox.classList.add('hidden'); });
-
-  function openLightbox(src) {
-    lightboxImg.src = src;
-    lightbox.classList.remove('hidden');
-  }
 
   const uploadZone = document.getElementById('upload-zone');
   const fileInput = document.getElementById('file-input');

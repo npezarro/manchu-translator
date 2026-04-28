@@ -1,4 +1,4 @@
-const { describe, it, before, after, beforeEach, afterEach } = require('node:test');
+const { describe, it, before, after, afterEach } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
 const { EventEmitter } = require('node:events');
