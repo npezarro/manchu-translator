@@ -20,21 +20,18 @@ Last Updated: 2026-04-15 — Translation breakout, OCR reliability, image enhanc
 
 ## Architecture
 ```
-VM (server.js:3110) → reverse tunnel → WSL (local-worker.js:3111) → Claude CLI
+VM (server) → reverse tunnel → WSL (local-worker) → Claude CLI
 ```
-- `ecosystem.config.js` — VM PM2 config (port 3110, 200MB limit)
-- `ecosystem.worker.config.js` — Local PM2 config (port 3111, 500MB limit)
-- Tunnel: `~/bin/start-tunnel.sh` with `-R 3111:127.0.0.1:3111`
+- `ecosystem.config.js` — VM PM2 config
+- `ecosystem.worker.config.js` — Local PM2 config
+- Tunnel: `~/bin/start-tunnel.sh`
 
 ## Open Work
 - Bounding box accuracy varies — padding (18px) helps but some crops may include neighbors
 - 75 tests passing (claude-cli, dictionary, image-cropper, prompt-builder, rate-limiter, server)
 
 ## Environment Notes
-- **Deploy target:** GCP VM ([VM_HOST])
-- **Process manager:** PM2 (`manchu-translator` on VM, `manchu-worker` on local)
-- **Port:** 3110 (VM server), 3111 (local worker)
-- **Web server config:** `/etc/apache2/sites-enabled/wordpress-https.conf` (ProxyPass /manchu/ → 127.0.0.1:3110, ProxyTimeout 660)
+- **Deploy details:** see privateContext/infrastructure.md
 - **Base path:** /manchu
 - **Database:** none (stateless, dictionary loaded from JSON)
 - **Node version:** 22.x
@@ -42,6 +39,4 @@ VM (server.js:3110) → reverse tunnel → WSL (local-worker.js:3111) → Claude
 ## Active Branch
 `main`
 
-Full session closeouts:
-- privateContext/deliverables/closeouts/2026-04-15-manchu-pipeline-restructure.md
-- privateContext/deliverables/closeouts/2026-04-15-manchu-translation-breakout.md
+Full session closeouts: see privateContext/deliverables/closeouts/
