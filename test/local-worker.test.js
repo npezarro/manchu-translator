@@ -136,10 +136,9 @@ describe('local-worker /health', () => {
     assert.equal(res.json.status, 'ok');
   });
 
-  it('includes hostname', async () => {
+  it('does not expose hostname', async () => {
     const res = await httpGet('/health');
-    assert.ok(typeof res.json.host === 'string');
-    assert.ok(res.json.host.length > 0);
+    assert.equal(res.json.host, undefined, 'hostname should not be in health response');
   });
 
   it('includes uptime as a number', async () => {
@@ -265,7 +264,7 @@ describe('local-worker /translate file extension detection', () => {
 });
 
 describe('local-worker /translate error handling', () => {
-  it('returns 500 when Claude CLI exits with non-zero code', async () => {
+  it('returns 500 with generic message when Claude CLI exits with non-zero code', async () => {
     mockSpawn({ exitCode: 1, stderr: 'API error' });
     const res = await multipartPost('/translate', { prompt: 'translate' }, {
       field: 'image',
@@ -274,11 +273,12 @@ describe('local-worker /translate error handling', () => {
       buffer: tinyPng,
     });
     assert.equal(res.status, 500);
-    assert.ok(res.json.error.includes('Claude CLI failed'));
-    assert.ok(res.json.error.includes('exit 1'));
+    assert.equal(res.json.error, 'Translation processing failed');
+    assert.ok(!res.json.error.includes('exit'), 'should not leak exit code');
+    assert.ok(!res.json.error.includes('CLI'), 'should not leak CLI details');
   });
 
-  it('returns 500 when Claude CLI spawn fails', async () => {
+  it('returns 500 with generic message when Claude CLI spawn fails', async () => {
     mockSpawn({ spawnError: 'ENOENT' });
     const res = await multipartPost('/translate', { prompt: 'translate' }, {
       field: 'image',
@@ -287,7 +287,9 @@ describe('local-worker /translate error handling', () => {
       buffer: tinyPng,
     });
     assert.equal(res.status, 500);
-    assert.ok(res.json.error.includes('spawn error'));
+    assert.equal(res.json.error, 'Translation processing failed');
+    assert.ok(!res.json.error.includes('spawn'), 'should not leak spawn details');
+    assert.ok(!res.json.error.includes('ENOENT'), 'should not leak system errors');
   });
 });
 
