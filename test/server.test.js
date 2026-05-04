@@ -100,7 +100,7 @@ describe('server', () => {
       assert.ok(res.json.error.includes('No image'));
     });
 
-    it('rejects non-image files', async () => {
+    it('rejects non-image files with safe message', async () => {
       const textBuffer = Buffer.from('not an image');
       const res = await multipartUpload(
         '/manchu/api/translate',
@@ -110,7 +110,7 @@ describe('server', () => {
         'text/plain'
       );
       assert.equal(res.status, 400);
-      assert.ok(res.json.error.includes('JPEG') || res.json.error.includes('Only'));
+      assert.equal(res.json.error, 'Only JPEG, PNG, and WebP images are accepted');
     });
 
     it('rejects files over 10MB', async () => {

@@ -214,10 +214,10 @@ app.use((err, req, res, next) => {
     if (err.code === 'LIMIT_FILE_SIZE') {
       return res.status(400).json({ error: 'File too large. Maximum size is 10MB.' });
     }
-    return res.status(400).json({ error: err.message });
+    return res.status(400).json({ error: 'Invalid upload. Please check your file and try again.' });
   }
-  if (err.message.includes('Only JPEG')) {
-    return res.status(400).json({ error: err.message });
+  if (err.message && err.message.includes('Only JPEG')) {
+    return res.status(400).json({ error: 'Only JPEG, PNG, and WebP images are accepted' });
   }
   next(err);
 });
