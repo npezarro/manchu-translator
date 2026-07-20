@@ -1,6 +1,8 @@
 const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 
+const WINDOW_MS = 60 * 60 * 1000; // mirror lib/rate-limiter.js
+
 // rate-limiter uses module-level state (ipMap, dailyCount, dailyReset).
 // We need a fresh module for each test suite to avoid cross-contamination.
 function freshRequire() {
@@ -61,6 +63,33 @@ describe('rate-limiter', () => {
       assert.equal(blocked.allowed, false);
       assert.ok(blocked.reason.includes('Daily limit'));
       assert.ok(typeof blocked.retryAfter === 'number');
+    });
+  });
+
+  describe('stale entry eviction', () => {
+    it('exposes the current tracked-IP count via size()', () => {
+      const rl = freshRequire();
+      assert.equal(rl.size(), 0);
+      rl.check('7.7.7.7');
+      rl.check('7.7.7.8');
+      assert.equal(rl.size(), 2);
+    });
+
+    it('evicts entries whose window has expired instead of growing forever', (t) => {
+      t.mock.timers.enable({ apis: ['Date'] });
+      const rl = freshRequire(); // re-init module state under the mocked clock
+
+      rl.check('9.9.9.1');
+      rl.check('9.9.9.2');
+      rl.check('9.9.9.3');
+      assert.equal(rl.size(), 3);
+
+      // Advance past the window + sweep interval; a later request triggers a sweep.
+      t.mock.timers.tick(WINDOW_MS + 60_000);
+      rl.check('8.8.8.8');
+
+      // The three expired IPs were pruned; only the fresh one remains.
+      assert.equal(rl.size(), 1);
     });
   });
 
