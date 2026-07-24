@@ -74,13 +74,20 @@ app.post(`${BASE}/api/translate`, upload.single('image'), async (req, res) => {
     // === IMAGE ENHANCEMENT ===
     const enhance = req.body?.enhance !== 'false'; // default: on
     let ocrImageBuffer = imageBuffer;
+    let ocrMimeType = mimeType;
     if (enhance) {
       try {
         ocrImageBuffer = await enhanceImage(imageBuffer);
+        // enhanceImage() always re-encodes to PNG, so the Content-Type must
+        // follow the bytes (same invariant the resize branch applies above).
+        // Otherwise Pass 1 ships PNG bytes labelled image/jpeg|webp and the
+        // worker writes them to a mislabelled temp file for Claude's Read tool.
+        ocrMimeType = 'image/png';
         console.log('  Image enhanced (normalize + sharpen)');
       } catch (err) {
         console.warn('  Enhancement failed, using original:', err.message);
         ocrImageBuffer = imageBuffer;
+        ocrMimeType = mimeType;
       }
     }
 
@@ -90,12 +97,12 @@ app.post(`${BASE}/api/translate`, upload.single('image'), async (req, res) => {
     let ocrData = null;
     let ocrRaw = '';
     try {
-      ocrRaw = await callClaude(ocrImageBuffer, mimeType, ocrPrompt, 'claude-sonnet-4-6');
+      ocrRaw = await callClaude(ocrImageBuffer, ocrMimeType, ocrPrompt, 'claude-sonnet-4-6');
       ocrData = parseOcrResponse(ocrRaw);
       if (!ocrData) {
         console.log('  OCR parse failed, retrying with stricter prompt...');
         const retryPrompt = 'Your previous response was not valid JSON. Return ONLY a raw JSON object — no markdown fences, no commentary, no text before or after.\n\n' + ocrPrompt;
-        ocrRaw = await callClaude(ocrImageBuffer, mimeType, retryPrompt, 'claude-sonnet-4-6');
+        ocrRaw = await callClaude(ocrImageBuffer, ocrMimeType, retryPrompt, 'claude-sonnet-4-6');
         ocrData = parseOcrResponse(ocrRaw);
       }
       if (ocrData) {
