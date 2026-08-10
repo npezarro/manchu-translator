@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="Manchu Translator">
+  <title>Manchu Translator</title>
+  <rect width="32" height="32" rx="7" fill="#9333EA"/>
+  <path d="M15 5.5 V26.5" fill="none" stroke="#FAF7F2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" /><path d="M15 11.4 L10 8.6 M15 19 L10 16.2" fill="none" stroke="#FAF7F2" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" /><circle cx="21.2" cy="13.6" r="2.1" fill="#FAF7F2" fill-opacity="1"/>
+</svg>
