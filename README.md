@@ -29,7 +29,7 @@ The backend uses `claude -p` (Claude Code CLI) with OAuth session auth, not the 
 ## Architecture
 
 ```
-Browser → Apache (SSL/proxy) → Express.js (port 3110) → Claude CLI → stdout → JSON response
+Browser → Apache (SSL/proxy) → Express.js (port 3113) → Claude CLI → stdout → JSON response
 ```
 
 - **Express.js** server with multer for image upload (10MB max)
@@ -76,7 +76,7 @@ public/
 npm install
 cp .env.example .env
 node server.js
-# Visit http://localhost:3110/manchu/
+# Visit http://localhost:3113/manchu/
 ```
 
 Requires `claude` CLI installed and authenticated.

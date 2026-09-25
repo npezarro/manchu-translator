@@ -3,7 +3,7 @@
 Last Updated: 2026-04-15 — Translation breakout, OCR reliability, image enhancement
 
 ## Current State
-- Translator is **online** via PM2 on VM ([VM_HOST]:3110)
+- Translator is **online** via PM2 on VM ([VM_HOST]:3113; 3110 is tier-share)
 - Claude CLI processing runs on **local WSL machine** (not the VM) via reverse SSH tunnel on port 3111
 - If local machine is offline, returns 503 "temporarily unavailable"
 - Two-pass pipeline: Structured OCR (Sonnet, JSON with bboxes) → Translation (Sonnet, XML tags)

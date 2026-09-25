@@ -10,7 +10,7 @@ const { cropCharacters, enhanceImage } = require('./lib/image-cropper');
 const rateLimiter = require('./lib/rate-limiter');
 
 const app = express();
-const PORT = process.env.PORT || 3110;
+const PORT = process.env.PORT || 3113;
 const BASE = '/manchu';
 
 // Load dictionary at startup
