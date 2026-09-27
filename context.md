@@ -15,6 +15,7 @@ Last Updated: 2026-04-15 — Translation breakout, OCR reliability, image enhanc
 - Character Map returns structured array with base64 crop images per word
 - Dictionary: Norman's Comprehensive Manchu-English Dictionary (20,599 entries)
 - Dictionary match rate improved from ~6% to ~52% with clean OCR input
+- Lookup gotcha: Norman lists verbs ONLY under the -mbi citation form, and many bare stems are unrelated headwords (ara = chaff, tuwa = fire). `stripSuffix` must emit stem+'mbi' before the bare stem for verb suffixes, or verb forms get a wrong gloss (not just a miss). -ci is noun ablative + verb conditional, so it stays noun-first. Measure any lookup change over the whole lexicon (misses AND wrong-word hits, plus old-vs-new diff on noun+case forms).
 - Rate limiting: 10 requests/IP/hour, 100/day global
 - Processing time: ~150 seconds per translation
 
@@ -28,7 +29,7 @@ VM (server) → reverse tunnel → WSL (local-worker) → Claude CLI
 
 ## Open Work
 - Bounding box accuracy varies — padding (18px) helps but some crops may include neighbors
-- 75 tests passing (claude-cli, dictionary, image-cropper, prompt-builder, rate-limiter, server)
+- 114 tests passing (claude-cli, dictionary, image-cropper, prompt-builder, rate-limiter, server)
 
 ## Environment Notes
 - **Deploy details:** see privateContext/infrastructure.md

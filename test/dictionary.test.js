@@ -92,6 +92,21 @@ describe('dictionary', () => {
       assert.ok(stems.includes('amb'), '-i suffix can still be stripped');
     });
 
+    it('tries the -mbi citation form before the bare stem for verb suffixes', () => {
+      const stems = stripSuffix('arame');
+      assert.deepEqual(stems, ['arame', 'arambi', 'ara']);
+    });
+
+    it('keeps the bare stem ahead of the -mbi form for ambiguous -ci', () => {
+      const stems = stripSuffix('adaci');
+      assert.ok(stems.indexOf('ada') < stems.indexOf('adambi'), `got ${JSON.stringify(stems)}`);
+    });
+
+    it('does not add a -mbi form for noun case suffixes', () => {
+      assert.ok(!stripSuffix('gurunde').includes('gurunmbi'));
+      assert.ok(!stripSuffix('morinbe').includes('morinmbi'));
+    });
+
     it('returns unique stems', () => {
       const stems = stripSuffix('arambi');
       const unique = [...new Set(stems)];
@@ -131,6 +146,40 @@ describe('dictionary', () => {
       // Either 'arambi' itself or its stripped stem should be found
       // This depends on dictionary content
       assert.ok(typeof results === 'object');
+    });
+
+    // Norman lists verbs only under -mbi. Before the fix, ara- resolved to
+    // ARA "chaff" and gene-/aga- missed or hit the noun AGA "rain".
+    const inflected = [
+      ['arame', 'arambi'],
+      ['arafi', 'arambi'],
+      ['arara', 'arambi'],
+      ['arahabi', 'arambi'],
+      ['genehe', 'genembi'],
+      ['genere', 'genembi'],
+      ['genefi', 'genembi'],
+      ['geneci', 'genembi'],
+      ['agaha', 'agambi']
+    ];
+    for (const [form, headword] of inflected) {
+      it(`resolves verb form ${form} to ${headword}`, () => {
+        assert.equal(lookupWords([form])[form], load()[headword]);
+      });
+    }
+
+    const nounForms = [
+      ['adaci', 'ada'],
+      ['gurunde', 'gurun'],
+      ['agai', 'aga']
+    ];
+    for (const [form, headword] of nounForms) {
+      it(`keeps noun form ${form} on ${headword}`, () => {
+        assert.equal(lookupWords([form])[form], load()[headword]);
+      });
+    }
+
+    it('prefers an exact headword over any stem (araha "adopted")', () => {
+      assert.equal(lookupWords(['araha']).araha, load().araha);
     });
 
     it('handles multiple words', () => {
