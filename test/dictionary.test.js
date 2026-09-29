@@ -178,6 +178,25 @@ describe('dictionary', () => {
       });
     }
 
+    // A noun ending in -n must keep its n under -de / -i; stripping -nde / -ni
+    // instead lands on a different, shorter headword.
+    const nStemForms = [
+      ['aisinde', 'aisin'],
+      ['hotonde', 'hoton'],
+      ['ejende', 'ejen'],
+      ['aisini', 'aisin'],
+      ['ejeni', 'ejen']
+    ];
+    for (const [form, headword] of nStemForms) {
+      it(`keeps the n of ${headword} in ${form}`, () => {
+        assert.equal(lookupWords([form])[form], load()[headword]);
+      });
+    }
+
+    it('still strips -ni from an -ng noun (wangni -> wang)', () => {
+      assert.equal(lookupWords(['wangni']).wangni, load().wang);
+    });
+
     it('prefers an exact headword over any stem (araha "adopted")', () => {
       assert.equal(lookupWords(['araha']).araha, load().araha);
     });
