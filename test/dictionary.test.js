@@ -168,7 +168,6 @@ describe('dictionary', () => {
     }
 
     const nounForms = [
-      ['adaci', 'ada'],
       ['gurunde', 'gurun'],
       ['agai', 'aga']
     ];
@@ -177,6 +176,39 @@ describe('dictionary', () => {
         assert.equal(lookupWords([form])[form], load()[headword]);
       });
     }
+
+    // -ci is the noun ablative and the verb conditional. When the bare stem is
+    // a noun and stem+mbi a verb, both glosses reach the translator, noun first.
+    const ciHomographs = [
+      ['tuwaci', 'tuwa', 'tuwambi'],
+      ['araci', 'ara', 'arambi'],
+      ['adaci', 'ada', 'adambi']
+    ];
+    for (const [form, noun, verb] of ciHomographs) {
+      it(`gives both glosses for -ci homograph ${form}`, () => {
+        const dict = load();
+        assert.equal(lookupWords([form])[form], `${dict[noun]}; or conditional of ${dict[verb]}`);
+      });
+    }
+
+    it('does not add a verb gloss when the -ci stem has no -mbi verb', () => {
+      const dict = load();
+      const noun = Object.keys(dict).find(k => /^[a-z]{3,}$/.test(k) && !dict[k + 'mbi'] && !dict[k + 'ci']);
+      assert.equal(lookupWords([noun + 'ci'])[noun + 'ci'], dict[noun]);
+    });
+
+    it('does not add a verb gloss when the -ci form is itself a headword', () => {
+      const dict = load();
+      const word = Object.keys(dict).find(k => /^[a-z]+ci$/.test(k) && dict[k.slice(0, -2)] && dict[k.slice(0, -2) + 'mbi']);
+      assert.ok(word, 'precondition: some -ci headword has noun and verb stems');
+      assert.equal(lookupWords([word])[word], dict[word]);
+    });
+
+    it('does not add a verb gloss to a noun matched through another suffix', () => {
+      const dict = load();
+      assert.ok(dict.adambi, 'precondition: adambi is a headword');
+      assert.equal(lookupWords(['adabe']).adabe, dict.ada);
+    });
 
     // A noun ending in -n must keep its n under -de / -i; stripping -nde / -ni
     // instead lands on a different, shorter headword.
