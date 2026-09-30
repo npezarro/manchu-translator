@@ -15,7 +15,7 @@ Last Updated: 2026-04-15 — Translation breakout, OCR reliability, image enhanc
 - Character Map returns structured array with base64 crop images per word
 - Dictionary: Norman's Comprehensive Manchu-English Dictionary (20,599 entries)
 - Dictionary match rate improved from ~6% to ~52% with clean OCR input
-- Lookup gotcha: Norman lists verbs ONLY under the -mbi citation form, and many bare stems are unrelated headwords (ara = chaff, tuwa = fire). `stripSuffix` must emit stem+'mbi' before the bare stem for verb suffixes, or verb forms get a wrong gloss (not just a miss). -ci is noun ablative + verb conditional, so it stays noun-first. Measure any lookup change over the whole lexicon (misses AND wrong-word hits, plus old-vs-new diff on noun+case forms).
+- Lookup gotcha: Norman lists verbs ONLY under the -mbi citation form, and many bare stems are unrelated headwords (ara = chaff, tuwa = fire). `stripSuffix` must emit stem+'mbi' before the bare stem for verb suffixes, or verb forms get a wrong gloss (not just a miss). -ci is noun ablative + verb conditional: when the bare stem is a noun AND stem+'mbi' is a verb (tuwaci, araci, adaci), `lookupWords` returns both glosses ("<noun>; or conditional of <verb>") so the translator picks from context; otherwise noun-first with -mbi as fallback. Measure any lookup change over the whole lexicon (misses AND wrong-word hits, plus old-vs-new diff on noun+case forms).
 - Rate limiting: 10 requests/IP/hour, 100/day global
 - Processing time: ~150 seconds per translation
 
